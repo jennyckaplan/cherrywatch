@@ -1,4 +1,4 @@
-# Cherry Blossom Watch at the Brooklyn Botanical Gardens
+# Cherry Blossom Watch at the Brooklyn Botanic Garden
 
 
 
