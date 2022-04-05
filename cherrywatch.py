@@ -3,6 +3,12 @@ from enum import Enum
 import re
 import json
 from bs4 import BeautifulSoup
+from twilio.rest import Client
+
+account_sid = "<account_sid>"
+auth_token = "<auth_token>"
+
+client = Client(account_sid, auth_token)
 
 class BloomStage(Enum):
   prebloom = "Prebloom"
@@ -39,9 +45,10 @@ bloom_stage_count = {
   BloomStage.post_peak_bloom.value: 0,
 }
 
+update_message = ""
 tree_count = len(prunuses)
-print(f"There are {tree_count} cherry blossom trees at the Brooklyn Botanic Garden")
-print("Today,")
+update_message += f"There are {tree_count} cherry blossom trees at the Brooklyn Botanic Garden\n\n"
+update_message += "Today,\n\n"
 
 for tree in prunuses:
     bloom_stage = tree[7]
@@ -58,4 +65,9 @@ def get_formatted_percentage(stage: BloomStage) -> str:
 
 for stage in BloomStage:
     percentage = get_formatted_percentage(stage)
-    print(f"{percentage} are at {stage.value}")
+    update_message += f"{percentage} are at {stage.value}\n"
+    
+message = client.messages.create(
+  to="<phone_number>", 
+  from_="<twilio_phone_number>", 
+  body=update_message)
