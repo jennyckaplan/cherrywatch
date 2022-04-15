@@ -65,12 +65,12 @@ for tree in prunuses:
 
 
 def get_percentage(stage: BloomStage) -> float:
-    return round(bloom_stage_count[stage.value] / tree_count, 4)
+    return round(bloom_stage_count[stage.value] / tree_count * 100, 2)
 
 
 def get_formatted_percentage(stage: BloomStage) -> str:
     percentage = get_percentage(stage)
-    return f"{percentage * 100}%"
+    return f"{percentage}%"
 
 
 for stage in BloomStage:
