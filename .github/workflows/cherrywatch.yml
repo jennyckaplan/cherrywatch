@@ -12,6 +12,7 @@ jobs:
     - name: Generate snapshot
       run: yarn test
     - name: Commit new files
+      if: failure()
       run: |
           git config --global user.name 'Jennifer Kaplan'
           git config --global user.email 'jennyckaplan@users.noreply.github.com'
