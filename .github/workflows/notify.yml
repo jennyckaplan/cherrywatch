@@ -9,7 +9,7 @@ jobs:
       ACCOUNT_SID: ${{ secrets.ACCOUNT_SID}}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
       RECIPIENT: ${{ secrets.RECIPIENT }}
-      TWILIO_NUMBER: ${{ TWILIO_NUMBER }}
+      TWILIO_NUMBER: ${{ secrets.TWILIO_NUMBER }}
     steps:
       - uses: actions/checkout@v1
       - uses: ./docker
