@@ -11,6 +11,13 @@ jobs:
       run: yarn
     - name: Generate snapshot
       run: yarn test
+    - name: Commit new files
+      run: |
+          git config --global user.name 'Jennifer Kaplan'
+          git config --global user.email 'jennyckaplan@users.noreply.github.com'
+          git checkout -b jck/testing
+          git commit -am "updated images"
+          git push
     - uses: actions/upload-artifact@v3
       if: failure()
       with:
