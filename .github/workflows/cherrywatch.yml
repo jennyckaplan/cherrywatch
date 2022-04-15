@@ -19,8 +19,3 @@ jobs:
           git checkout -b jck/testing
           git commit -am "updated images"
           git push origin jck/testing
-    - uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: Upload artifacts
-        path: __image_snapshots__/__diff_output__
