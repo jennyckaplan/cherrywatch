@@ -10,3 +10,7 @@ jobs:
       run: yarn
     - name: Run tests
       run: yarn test
+    - uses: actions/upload-artifact@v3
+      with:
+        name: my-artifact
+        path: __image_snapshots__
