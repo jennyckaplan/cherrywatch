@@ -8,8 +8,8 @@
 
 ### Building
 
-`docker-compose up --build`
+`cd docker && docker-compose up --build`
 
 ### Running
 
-`docker-compose up`
+`cd docker && docker-compose up`

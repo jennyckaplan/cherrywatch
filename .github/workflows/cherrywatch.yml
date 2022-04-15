@@ -7,7 +7,7 @@ jobs:
     env:
       ACCOUNT_SID: ${{ secrets.ACCOUNT_SID}}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-      RECIPIENT: ${{ secrets.RECIPIENT }}
+      RECIPIENTS: ${{ secrets.RECIPIENTS }}
       TWILIO_NUMBER: ${{ secrets.TWILIO_NUMBER }}
     steps:
     - name: Checkout

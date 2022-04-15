@@ -11,7 +11,7 @@ from twilio.rest import Client
 ACCOUNT_SID = os.environ.get("ACCOUNT_SID")
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 TWILIO_NUMBER = os.environ.get("TWILIO_NUMBER")
-RECIPIENT = os.environ.get("RECIPIENT")
+RECIPIENTS = os.environ.get("RECIPIENTS")
 
 account_sid = ACCOUNT_SID
 auth_token = AUTH_TOKEN
@@ -80,12 +80,15 @@ for stage in BloomStage:
 today = date.today()
 today = today.strftime("%-m-%-d-%Y")
 
+recipients = RECIPIENTS.split(",")
+
 try:
-    message = client.messages.create(
-        to=RECIPIENT,
-        from_=TWILIO_NUMBER,
-        body=update_message,
-        media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
-    )
+    for recipient in recipients:
+        message = client.messages.create(
+            to=recipient,
+            from_=TWILIO_NUMBER,
+            body=update_message,
+            media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
+        )
 except:
     sys.exit(1)
