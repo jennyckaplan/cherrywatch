@@ -1,0 +1,9 @@
+version: "2.2"
+services:
+  cherrywatch:
+    container_name: cherrywatch
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
