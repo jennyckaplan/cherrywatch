@@ -18,7 +18,7 @@ jobs:
           git config --global user.email 'jennyckaplan@users.noreply.github.com'
           git checkout -b jck/testing
           git commit -am "updated images"
-          git push
+          git push origin jck/testing
     - uses: actions/upload-artifact@v3
       if: failure()
       with:
