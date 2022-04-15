@@ -33,5 +33,5 @@ jobs:
           git push --force origin main
 
     - name: Notify users of updates to map
-      if: failure()
+      # if: failure()
       uses: ./docker
