@@ -14,4 +14,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: Upload artifacts
-        path: __image_snapshots__/__diff_output__
+        path: cherrywatch/__image_snapshots__/__diff_output__
