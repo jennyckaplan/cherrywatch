@@ -1,4 +1,4 @@
-name: cherrywatch
+name: Gets most up to date Cherry Blossom map
 on: push
 
 jobs:
