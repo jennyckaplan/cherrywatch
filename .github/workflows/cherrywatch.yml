@@ -12,6 +12,7 @@ jobs:
     - name: Generate snapshot
       run: yarn test
     - uses: actions/upload-artifact@v3
+      if: failure()
       with:
         name: Upload artifacts
-        path: cherrywatch/__image_snapshots__/__diff_output__
+        path: __image_snapshots__/__diff_output__
