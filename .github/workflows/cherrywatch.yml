@@ -24,7 +24,7 @@ jobs:
       run: yarn test -u
 
     - name: Commit new files
-      if: failure()
+      if: always()
       run: |
           git config --global user.name 'Jennifer Kaplan'
           git config --global user.email 'jennyckaplan@users.noreply.github.com'

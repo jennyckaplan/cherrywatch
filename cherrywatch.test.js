@@ -37,7 +37,6 @@ describe("visual snapshots", () => {
       path: `./images/${today}.png`,
     });
 
-    // TODO: if diff, send the text
     expect(image).toMatchImageSnapshot();
   });
 
