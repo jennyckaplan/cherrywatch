@@ -30,6 +30,7 @@ jobs:
           git config --global user.email 'jennyckaplan@users.noreply.github.com'
           git commit -am "updated images"
           git push --force origin main
-          
+
     - name: Notify users of updates to map
+      if: failure()
       uses: ./docker
