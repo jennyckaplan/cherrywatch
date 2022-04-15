@@ -19,6 +19,5 @@ jobs:
       run: |
           git config --global user.name 'Jennifer Kaplan'
           git config --global user.email 'jennyckaplan@users.noreply.github.com'
-          git checkout jck/testing
           git commit -am "updated images"
-          git push --force origin jck/testing
+          git push --force origin main
