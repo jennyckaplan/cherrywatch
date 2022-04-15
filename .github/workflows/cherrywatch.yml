@@ -5,12 +5,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Install dependencies
       run: yarn
-    - name: Run tests
+    - name: Generate snapshot
       run: yarn test
     - uses: actions/upload-artifact@v3
       with:
-        name: my-artifact
-        path: __image_snapshots__
+        name: Upload artifacts
+        path: __image_snapshots__/__diff_output__
