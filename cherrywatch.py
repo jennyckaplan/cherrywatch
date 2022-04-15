@@ -80,12 +80,12 @@ for stage in BloomStage:
 today = date.today()
 today = today.strftime("%-m-%-d-%Y")
 
-try:
-    message = client.messages.create(
-        to=RECIPIENT,
-        from_=TWILIO_NUMBER,
-        body=update_message,
-        media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
-    )
-except:
-    sys.exit(1)
+# try:
+#     message = client.messages.create(
+#         to=RECIPIENT,
+#         from_=TWILIO_NUMBER,
+#         body=update_message,
+#         media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
+#     )
+# except:
+#     sys.exit(1)
