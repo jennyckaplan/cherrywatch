@@ -1,0 +1,7 @@
+name: "Run docker"
+description: "Cherry Blossom notifier"
+author: "jenniferckaplan@gmail.com"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
