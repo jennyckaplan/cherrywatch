@@ -1,5 +1,5 @@
 name: "Run docker"
-description: "Cherry Blossom notifier"
+description: "notifier"
 author: "jenniferckaplan@gmail.com"
 
 runs:
