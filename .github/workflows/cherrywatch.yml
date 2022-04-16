@@ -1,7 +1,7 @@
 name: Notifies users of changes to the cherry blossom map
 on:
   schedule:
-    - cron: '0 8,12,16,19 * * *'
+    - cron: '0 0,13,17,21 * * *'
 
 jobs:
   build:
