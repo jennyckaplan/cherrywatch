@@ -1,9 +1,11 @@
 # Cherry Blossom Watch at the Brooklyn Botanic Garden
 
-Runs a Github Action that scrapes the BBG's cherry watch tracker
-for their map and data on the current state of the cherry blossom garden. Using
-Jest image snapshots, we can determine if this map has changed and alert users 
-using Twilio.
+Uses Github Actions to:
+- Scrape the BBG's cherry watch tracker for their data on the current state of the cherry blossom garden
+- Using Jest image snapshots, takes a screenshot of the [cherry blossom map](https://www.bbg.org/collections/cherries), and determines if the image has changed from the prior snapshot
+- If the image has changed (the map on their site has been updated), we alert recipients via Twilio of the updates to the garden with stats on each bloom phase and an image of the updated map.
+
+![IMG_6482](https://user-images.githubusercontent.com/25395806/165341846-239d6da7-7f31-4266-893f-f6c4340243ed.PNG)
 
 ### Generate the cherry blossom map
 `yarn test`
