@@ -118,7 +118,6 @@ today = date.today()
 today = today.strftime("%-m-%-d-%Y")
 
 recipients = RECIPIENTS.split(",")
-logging.info(f"Sending to recipients: {recipients}")
 
 try:
     for recipient in recipients:
