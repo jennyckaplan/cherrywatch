@@ -1,7 +1,8 @@
 name: Notifies users of changes to the cherry blossom map
 on:
-  schedule:
-    - cron: '0 0,13,17,21 * * *'
+  pull_request
+  # schedule:
+  #   - cron: '0 0,13,17,21 * * *'
 
 jobs:
   build:
@@ -12,28 +13,28 @@ jobs:
       RECIPIENTS: ${{ secrets.RECIPIENTS }}
       TWILIO_NUMBER: ${{ secrets.TWILIO_NUMBER }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: yarn
+      - name: Install dependencies
+        run: yarn
 
-    - name: Generate snapshot
-      run: yarn test
+      - name: Generate snapshot
+        run: yarn test
 
-    - name: Update image snapshots on failure
-      if: failure()
-      run: yarn test -u
+      - name: Update image snapshots on failure
+        if: failure()
+        run: yarn test -u
 
-    - name: Commit new files
-      if: always()
-      run: |
+      - name: Commit new files
+        if: always()
+        run: |
           git config --global user.name 'Jennifer Kaplan'
-          git config --global user.email 'jennyckaplan@users.noreply.github.com'
+          git config --global user.email 'jenniferckaplan@gmail.com'
           git add .
           git commit -am "updated images" --allow-empty
           git push --force origin main
 
-    - name: Notify users of updates to map
-      if: failure()
-      uses: ./docker
+      - name: Notify users of updates to map
+        if: failure()
+        uses: ./docker

@@ -1,5 +1,6 @@
 import requests
 import os
+import logging
 import sys
 from enum import Enum
 from datetime import date
@@ -7,6 +8,42 @@ import re
 import json
 from bs4 import BeautifulSoup
 from twilio.rest import Client
+from logging.config import dictConfig
+
+dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {
+            # the default formatter
+            "default": {
+                # for more formatting see https://docs.python.org/3/library/logging.html#logrecord-attributes  # noqa: E501
+                "format": "%(asctime)s [%(name)s] [%(levelname)s] [%(filename)s:%(lineno)d - %(funcName)s()] - %(message)s",  # noqa: E501
+            }
+        },
+        "handlers": {
+            # log to the console
+            "console": {
+                "level": "INFO",
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+                "stream": "ext://sys.stdout",
+            },
+        },
+        "loggers": {
+            # set the fast api logger
+            "fastapi": {
+                # set handlers based on the config name
+                "handlers": ["console"],
+                "level": "INFO",
+                # don't propagate to the root logger
+                "propagate": False,
+            },
+        },
+        # set the root logger
+        "root": {"level": "INFO", "handlers": ["console"]},
+    }
+)
 
 ACCOUNT_SID = os.environ.get("ACCOUNT_SID")
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
@@ -81,6 +118,7 @@ today = date.today()
 today = today.strftime("%-m-%-d-%Y")
 
 recipients = RECIPIENTS.split(",")
+logging.info(f"Sending to recipients: {recipients}")
 
 try:
     for recipient in recipients:
@@ -90,5 +128,6 @@ try:
             body=update_message,
             media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
         )
-except:
+except Exception as error:
+    logging.info(f"ERROR: {error}")
     sys.exit(1)

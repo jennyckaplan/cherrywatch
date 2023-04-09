@@ -6,4 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/app
+      - ../:/app
+    environment:
+      - ACCOUNT_SID=${ACCOUNT_SID}
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - TWILIO_NUMBER=${TWILIO_NUMBER}
+      - RECIPIENTS=${RECIPIENTS}
+      - LOG_LEVEL=debug
