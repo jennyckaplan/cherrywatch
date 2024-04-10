@@ -1,9 +1,11 @@
 import requests
+import html
 import os
 import logging
 import sys
 from enum import Enum
 from datetime import date
+from collections import defaultdict
 import re
 import json
 from bs4 import BeautifulSoup
@@ -69,7 +71,7 @@ page = requests.get(URL)
 soup = BeautifulSoup(page.text, "html.parser")
 raw_html = soup.prettify()
 
-script_with_tree_data = soup.find_all("script")[1].string.strip()
+script_with_tree_data = soup.find_all("script")[3].string.strip()
 
 pattern = re.compile("var prunuses = ([\s\S]*);", re.MULTILINE)
 
@@ -81,43 +83,52 @@ prunuses = re.sub(",[ \t\r\n]+\]", "]", prunuses)
 
 prunuses = json.loads(prunuses)
 
-bloom_stage_count = {
-    BloomStage.prebloom.value: 0,
-    BloomStage.first_bloom.value: 0,
-    BloomStage.peak_bloom.value: 0,
-    BloomStage.post_peak_bloom.value: 0,
-}
+bloom_counts = defaultdict(lambda: defaultdict(int))
+total_counts = defaultdict(int)
 
 update_message = ""
 tree_count = len(prunuses)
 update_message += "Welcome to Jen's Cherry Blossom Watch! \n\n"
-update_message += (
-    f"Out of the {tree_count} cherry blossom trees at the Brooklyn Botanic Garden,\n\n"
-)
-update_message += "Today,\n\n"
+update_message += "Today, at the Brooklyn Botanic Garden, the following cherries are at 80% or more peak bloom:\n\n"
+
+tree_type_names = {}
+
+def fix_encoding(text):
+    fixed_text = text.encode('windows-1252', errors='ignore').decode('utf-8', errors='ignore')
+    # Replace multiple spaces with a single space
+    fixed_text = re.sub(r'\s+', ' ', fixed_text).strip()
+    return fixed_text
 
 for tree in prunuses:
+    tree_type = tree[3]
     bloom_stage = tree[7]
-    bloom_stage_count[bloom_stage] += 1
+    bloom_counts[tree_type][bloom_stage] += 1
+    total_counts[tree_type] += 1
+    tree_type_names[tree_type] = html.unescape(fix_encoding(tree[1]))
+    
+    
+percentages = defaultdict(dict)
 
+for tree_type in bloom_counts:
+    for stage in BloomStage:
+        stage_count = bloom_counts[tree_type].get(stage.value, 0)
+        total_count = total_counts[tree_type]
+        percentages[tree_type][stage.value] = round((stage_count / total_count) * 100, 2)
 
-def get_percentage(stage: BloomStage) -> float:
-    return round(bloom_stage_count[stage.value] / tree_count * 100, 2)
-
-
-def get_formatted_percentage(stage: BloomStage) -> str:
-    percentage = get_percentage(stage)
-    return f"{percentage}%"
-
-
-for stage in BloomStage:
-    percentage = get_formatted_percentage(stage)
-    update_message += f"{percentage} are at {stage.value}\n"
+for tree_type, stages in percentages.items():
+    peak_bloom_percentage = stages.get(BloomStage.peak_bloom.value, 0)
+    if peak_bloom_percentage > 80:
+        tree_type_name = tree_type_names.get(tree_type, "Unknown Type")
+        update_message += f"\n{tree_type_name}:\n"
+        update_message += f"Images: https://www.bbg.org/collections/cherry_stages#{tree_type}\n"
+        update_message += f"Peak Bloom: {peak_bloom_percentage}%\n"
 
 today = date.today()
 today = today.strftime("%-m-%-d-%Y")
 
 recipients = RECIPIENTS.split(",")
+
+print(f"Message: {update_message}")
 
 try:
     for recipient in recipients:
