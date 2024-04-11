@@ -1,6 +1,7 @@
 name: Notifies users of changes to the cherry blossom map
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: "14 12 * * *"
 
 jobs:
   build:
