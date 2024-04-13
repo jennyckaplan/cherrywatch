@@ -89,39 +89,39 @@ total_counts = defaultdict(int)
 update_message = ""
 tree_count = len(prunuses)
 update_message += "Welcome to Jen's Cherry Blossom Watch! \n\n"
-update_message += "Today, at the Brooklyn Botanic Garden, the following cherries are at 80% or more peak bloom:\n\n"
+update_message += "Today, at the Brooklyn Botanic Garden, the Japanese Hill-and-Pond Garden is at peak bloom! There are 16 types of cherry trees flowering now! The Cherry Esplanade (the main strip of cherry trees at the garden), has not yet started blooming.\n\n"
 
-tree_type_names = {}
+# tree_type_names = {}
 
-def fix_encoding(text):
-    fixed_text = text.encode('windows-1252', errors='ignore').decode('utf-8', errors='ignore')
-    # Replace multiple spaces with a single space
-    fixed_text = re.sub(r'\s+', ' ', fixed_text).strip()
-    return fixed_text
+# def fix_encoding(text):
+#     fixed_text = text.encode('windows-1252', errors='ignore').decode('utf-8', errors='ignore')
+#     # Replace multiple spaces with a single space
+#     fixed_text = re.sub(r'\s+', ' ', fixed_text).strip()
+#     return fixed_text
 
-for tree in prunuses:
-    tree_type = tree[3]
-    bloom_stage = tree[7]
-    bloom_counts[tree_type][bloom_stage] += 1
-    total_counts[tree_type] += 1
-    tree_type_names[tree_type] = html.unescape(fix_encoding(tree[1]))
-    
-    
-percentages = defaultdict(dict)
+# for tree in prunuses:
+#     tree_type = tree[3]
+#     bloom_stage = tree[7]
+#     bloom_counts[tree_type][bloom_stage] += 1
+#     total_counts[tree_type] += 1
+#     tree_type_names[tree_type] = html.unescape(fix_encoding(tree[1]))
 
-for tree_type in bloom_counts:
-    for stage in BloomStage:
-        stage_count = bloom_counts[tree_type].get(stage.value, 0)
-        total_count = total_counts[tree_type]
-        percentages[tree_type][stage.value] = round((stage_count / total_count) * 100, 2)
 
-for tree_type, stages in percentages.items():
-    peak_bloom_percentage = stages.get(BloomStage.peak_bloom.value, 0)
-    if peak_bloom_percentage > 80:
-        tree_type_name = tree_type_names.get(tree_type, "Unknown Type")
-        update_message += f"\n{tree_type_name}:\n"
-        update_message += f"Images: https://www.bbg.org/collections/cherry_stages#{tree_type}\n"
-        update_message += f"Peak Bloom: {peak_bloom_percentage}%\n"
+# percentages = defaultdict(dict)
+
+# for tree_type in bloom_counts:
+#     for stage in BloomStage:
+#         stage_count = bloom_counts[tree_type].get(stage.value, 0)
+#         total_count = total_counts[tree_type]
+#         percentages[tree_type][stage.value] = round((stage_count / total_count) * 100, 2)
+
+# for tree_type, stages in percentages.items():
+#     peak_bloom_percentage = stages.get(BloomStage.peak_bloom.value, 0)
+#     if peak_bloom_percentage > 80:
+#         tree_type_name = tree_type_names.get(tree_type, "Unknown Type")
+#         update_message += f"\n{tree_type_name}:\n"
+#         # update_message += f"Images: https://www.bbg.org/collections/cherry_stages#{tree_type}\n"
+#         update_message += f"Peak Bloom: {peak_bloom_percentage}%\n"
 
 today = date.today()
 today = today.strftime("%-m-%-d-%Y")
