@@ -63,65 +63,79 @@ class BloomStage(Enum):
     first_bloom = "First Bloom"
     peak_bloom = "Peak Bloom"
     post_peak_bloom = "Post-Peak Bloom"
+    
+def get_scraped_tree_data():
+    URL = "https://www.bbg.org/collections/cherries"
+    page = requests.get(URL)
+
+    soup = BeautifulSoup(page.text, "html.parser")
+
+    script_with_tree_data = soup.find_all("script")[3].string.strip()
+
+    pattern = re.compile("var prunuses = ([\s\S]*);", re.MULTILINE)
+
+    prunuses = re.match(pattern, script_with_tree_data)
+    prunuses = prunuses.group(1)
+
+    # remove trailing comma
+    prunuses = re.sub(",[ \t\r\n]+\]", "]", prunuses)
+
+    prunuses = json.loads(prunuses)
+    
+    return prunuses
 
 
-URL = "https://www.bbg.org/collections/cherries"
-page = requests.get(URL)
+prunuses = get_scraped_tree_data()
 
-soup = BeautifulSoup(page.text, "html.parser")
-raw_html = soup.prettify()
+update_message = "Welcome to Jen's Cherry Blossom Watch! \n\n"
+update_message += "Today, at the Brooklyn Botanic Garden, "
 
-script_with_tree_data = soup.find_all("script")[3].string.strip()
+kanzan_bloom_counts = defaultdict(int)
+combined_other_bloom_counts = defaultdict(int)
+total_kanzan = 0
+total_others = 0
 
-pattern = re.compile("var prunuses = ([\s\S]*);", re.MULTILINE)
+tree_types = set()
 
-prunuses = re.match(pattern, script_with_tree_data)
-prunuses = prunuses.group(1)
+# Process the tree data
+for tree in prunuses:
+    tree_type = tree[3]
+    tree_types.add(tree_type)
+    bloom_stage = tree[7]
+    if tree_type == "kanzan":
+        kanzan_bloom_counts[bloom_stage] += 1
+        total_kanzan += 1
+    else:
+        combined_other_bloom_counts[bloom_stage] += 1
+        total_others += 1
+        
+# Remove 'kanzan' from the set and count the remaining types
+tree_types.discard("kanzan")
+non_kanzan_species_count = len(tree_types)
 
-# remove trailing comma
-prunuses = re.sub(",[ \t\r\n]+\]", "]", prunuses)
+# Calculating percentages
+kanzan_percentages = {
+    stage: round((count / total_kanzan) * 100, 2)
+    for stage, count in kanzan_bloom_counts.items()
+}
+other_percentages = {
+    stage: round((count / total_others) * 100, 2)
+    for stage, count in combined_other_bloom_counts.items()
+}
 
-prunuses = json.loads(prunuses)
+update_message += "the Cherry Esplanade has begun blooming! \n"
 
-bloom_counts = defaultdict(lambda: defaultdict(int))
-total_counts = defaultdict(int)
+desired_order = ['Prebloom', 'First Bloom', 'Peak Bloom', 'Post-Peak Bloom']
 
-update_message = ""
-tree_count = len(prunuses)
-update_message += "Welcome to Jen's Cherry Blossom Watch! \n\n"
-update_message += "Today, at the Brooklyn Botanic Garden, the Japanese Hill-and-Pond Garden is at peak bloom! There are 16 types of cherry trees flowering now! The Cherry Esplanade (the main strip of cherry trees at the garden), has not yet started blooming.\n\n"
+for stage in desired_order:
+    if stage in kanzan_percentages:
+        update_message += f"'{stage}': {kanzan_percentages[stage]}%\n"
 
-# tree_type_names = {}
+update_message += f"\nThe remaining {non_kanzan_species_count} species are at the following bloom stages:\n"
 
-# def fix_encoding(text):
-#     fixed_text = text.encode('windows-1252', errors='ignore').decode('utf-8', errors='ignore')
-#     # Replace multiple spaces with a single space
-#     fixed_text = re.sub(r'\s+', ' ', fixed_text).strip()
-#     return fixed_text
-
-# for tree in prunuses:
-#     tree_type = tree[3]
-#     bloom_stage = tree[7]
-#     bloom_counts[tree_type][bloom_stage] += 1
-#     total_counts[tree_type] += 1
-#     tree_type_names[tree_type] = html.unescape(fix_encoding(tree[1]))
-
-
-# percentages = defaultdict(dict)
-
-# for tree_type in bloom_counts:
-#     for stage in BloomStage:
-#         stage_count = bloom_counts[tree_type].get(stage.value, 0)
-#         total_count = total_counts[tree_type]
-#         percentages[tree_type][stage.value] = round((stage_count / total_count) * 100, 2)
-
-# for tree_type, stages in percentages.items():
-#     peak_bloom_percentage = stages.get(BloomStage.peak_bloom.value, 0)
-#     if peak_bloom_percentage > 80:
-#         tree_type_name = tree_type_names.get(tree_type, "Unknown Type")
-#         update_message += f"\n{tree_type_name}:\n"
-#         # update_message += f"Images: https://www.bbg.org/collections/cherry_stages#{tree_type}\n"
-#         update_message += f"Peak Bloom: {peak_bloom_percentage}%\n"
+for stage in desired_order:
+    if stage in other_percentages:
+        update_message += f"'{stage}': {other_percentages[stage]}%\n"
 
 today = date.today()
 today = today.strftime("%-m-%-d-%Y")
