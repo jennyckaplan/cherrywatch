@@ -123,7 +123,7 @@ other_percentages = {
     for stage, count in combined_other_bloom_counts.items()
 }
 
-update_message += "the Cherry Esplanade has begun blooming! \n"
+update_message += "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk are at peak bloom! 🚨\n"
 
 desired_order = ['Prebloom', 'First Bloom', 'Peak Bloom', 'Post-Peak Bloom']
 
