@@ -21,6 +21,10 @@ Update (2024):
 <p align="center">
   <img src="https://github.com/jennyckaplan/cherrywatch/assets/25395806/7dbfc3b5-7387-4c15-9591-f064fca1ad26" width="400" height="auto">
 </p>
+<p align="center">
+  <img src="https://github.com/jennyckaplan/cherrywatch/assets/25395806/7819c8b2-7aa6-498f-b260-bb9acf12bd27" width="400" height="auto">
+</p>
+
 
 
 After some investigation, I found the relevant area of the code that held the cherry blossom data (what bloom stage each tree is at). While I could have used this data to determine if the site had been updated by storing it and comparing it to the previous state on each run, I wanted to test out Jest Image Snapshots (and using Jest regression testing means I don't need to have a database!). Therefore, this system only relies on visual regression testing to determine if the map has been updated.
