@@ -47,6 +47,7 @@ RECIPIENTS = os.environ.get("RECIPIENTS")
 
 URL = "https://www.bbg.org/collections/cherries"
 REQUEST_TIMEOUT_SECONDS = 30
+MEDIA_REQUEST_TIMEOUT_SECONDS = 10
 PRUNUSES_PATTERN = re.compile(r"var prunuses = (\[.*?\]);", re.DOTALL)
 DESIRED_ORDER = ["Prebloom", "First Bloom", "Peak Bloom", "Post-Peak Bloom"]
 
@@ -162,21 +163,47 @@ def get_twilio_client():
     return Client(ACCOUNT_SID, AUTH_TOKEN)
 
 
-def send_notifications(update_message):
+def get_media_url():
     today = date.today().strftime("%-m-%-d-%Y")
+    media_url = f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png"
+
+    try:
+        response = requests.get(media_url, timeout=MEDIA_REQUEST_TIMEOUT_SECONDS, stream=True)
+        response.raise_for_status()
+        content_type = response.headers.get("content-type", "")
+        if not content_type.startswith("image/"):
+            logging.warning(
+                "Skipping media URL because content type was not an image: %s",
+                content_type,
+            )
+            return None
+        return media_url
+    except requests.RequestException as error:
+        logging.warning("Skipping media URL because it is not available yet: %s", error)
+        return None
+    finally:
+        if "response" in locals():
+            response.close()
+
+
+def send_notifications(update_message):
     client = get_twilio_client()
     recipients = get_recipients()
+    media_url = get_media_url()
 
     logging.info("Sending update to %s recipient(s).", len(recipients))
     logging.info("Message: %s", update_message)
 
     for recipient in recipients:
-        client.messages.create(
-            to=recipient,
-            from_=TWILIO_NUMBER,
-            body=update_message,
-            media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
-        )
+        message_options = {
+            "to": recipient,
+            "from_": TWILIO_NUMBER,
+            "body": update_message,
+        }
+        if media_url:
+            message_options["media_url"] = media_url
+
+        client.messages.create(**message_options)
 
 
 def main():
