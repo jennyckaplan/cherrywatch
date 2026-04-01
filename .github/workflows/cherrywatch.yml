@@ -23,9 +23,13 @@ jobs:
         id: snapshot_test
         continue-on-error: true
         run: |
+          set +e
           yarn test --runInBand 2>&1 | tee test-output.log
-          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
-          if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+          test_exit_code=${PIPESTATUS[0]}
+          set -e
+
+          echo "exit_code=$test_exit_code" >> "$GITHUB_OUTPUT"
+          if [ "$test_exit_code" -eq 0 ]; then
             echo "status=pass" >> "$GITHUB_OUTPUT"
           elif rg -q "Expected image to match or be a close match to snapshot" test-output.log; then
             echo "status=snapshot_diff" >> "$GITHUB_OUTPUT"
