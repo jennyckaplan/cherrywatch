@@ -31,7 +31,7 @@ jobs:
           echo "exit_code=$test_exit_code" >> "$GITHUB_OUTPUT"
           if [ "$test_exit_code" -eq 0 ]; then
             echo "status=pass" >> "$GITHUB_OUTPUT"
-          elif rg -q "Expected image to match or be a close match to snapshot" test-output.log; then
+          elif grep -Fq "Snapshot Summary" test-output.log && grep -Fq "snapshot failed" test-output.log; then
             echo "status=snapshot_diff" >> "$GITHUB_OUTPUT"
           else
             echo "status=error" >> "$GITHUB_OUTPUT"
