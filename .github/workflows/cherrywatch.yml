@@ -20,14 +20,31 @@ jobs:
         run: yarn
 
       - name: Generate snapshot
-        run: yarn test
+        id: snapshot_test
+        continue-on-error: true
+        run: |
+          yarn test --runInBand 2>&1 | tee test-output.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          elif rg -q "Expected image to match or be a close match to snapshot" test-output.log; then
+            echo "status=snapshot_diff" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=error" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail on test infrastructure errors
+        if: steps.snapshot_test.outputs.status == 'error'
+        run: |
+          echo "Snapshot test failed for a reason other than an image diff."
+          exit 1
 
       - name: Update image snapshots on failure
-        if: failure()
-        run: yarn test -u
+        if: steps.snapshot_test.outputs.status == 'snapshot_diff'
+        run: yarn test -u --runInBand
 
       - name: Commit new files
-        if: always()
+        if: steps.snapshot_test.outputs.status == 'snapshot_diff'
         run: |
           git config --global user.name 'Jennifer Kaplan'
           git config --global user.email 'jenniferckaplan@gmail.com'
@@ -36,5 +53,5 @@ jobs:
           git push --force origin main
 
       - name: Notify users of updates to map
-        if: failure()
+        if: steps.snapshot_test.outputs.status == 'snapshot_diff'
         uses: ./docker

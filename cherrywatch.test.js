@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer")
 const { toMatchImageSnapshot } = require("jest-image-snapshot")
 
 const url = 'https://www.bbg.org/collections/cherries'
+const isCI = process.env.CI === "true"
 
 describe("visual snapshots", () => {
 
@@ -9,7 +10,9 @@ describe("visual snapshots", () => {
   let page;
 
   beforeAll(async () => {
-    browser = await puppeteer.launch();
+    browser = await puppeteer.launch({
+      args: isCI ? ["--no-sandbox", "--disable-setuid-sandbox"] : [],
+    });
   });
 
   it('get visual snapshot of cherry watch map', async () => {
@@ -41,7 +44,11 @@ describe("visual snapshots", () => {
   });
 
   afterAll(async () => {
-    await page.close();
-    await browser.close();
+    if (page) {
+      await page.close();
+    }
+    if (browser) {
+      await browser.close();
+    }
   });
 });

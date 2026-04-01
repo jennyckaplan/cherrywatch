@@ -118,7 +118,14 @@ def build_update_message(prunuses):
 
     update_message = "Welcome to Jen's Cherry Blossom Watch! \n\n"
     update_message += "Today, at the Brooklyn Botanic Garden, "
-    update_message += "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk are at peak bloom! 🚨\n"
+    peak_bloom_percentage = kanzan_percentages.get("Peak Bloom", 0)
+    if peak_bloom_percentage >= 80:
+        update_message += "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk are at peak bloom! 🚨\n"
+    else:
+        update_message += (
+            "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk "
+            "are at the following bloom stages:\n"
+        )
 
     for stage in DESIRED_ORDER:
         if stage in kanzan_percentages:
