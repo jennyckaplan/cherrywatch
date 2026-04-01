@@ -1,4 +1,4 @@
-version: "2.2"
+version: "2.35.1"
 services:
   cherrywatch:
     container_name: cherrywatch

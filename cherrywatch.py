@@ -1,30 +1,27 @@
-import requests
-import html
-import os
-import logging
-import sys
-from enum import Enum
-from datetime import date
-from collections import defaultdict
-import re
 import json
+import logging
+import os
+import re
+import sys
+from collections import defaultdict
+from datetime import date
+from logging.config import dictConfig
+
+import requests
 from bs4 import BeautifulSoup
 from twilio.rest import Client
-from logging.config import dictConfig
+
 
 dictConfig(
     {
         "version": 1,
         "disable_existing_loggers": True,
         "formatters": {
-            # the default formatter
             "default": {
-                # for more formatting see https://docs.python.org/3/library/logging.html#logrecord-attributes  # noqa: E501
-                "format": "%(asctime)s [%(name)s] [%(levelname)s] [%(filename)s:%(lineno)d - %(funcName)s()] - %(message)s",  # noqa: E501
+                "format": "%(asctime)s [%(name)s] [%(levelname)s] [%(filename)s:%(lineno)d - %(funcName)s()] - %(message)s",
             }
         },
         "handlers": {
-            # log to the console
             "console": {
                 "level": "INFO",
                 "class": "logging.StreamHandler",
@@ -33,16 +30,12 @@ dictConfig(
             },
         },
         "loggers": {
-            # set the fast api logger
             "fastapi": {
-                # set handlers based on the config name
                 "handlers": ["console"],
                 "level": "INFO",
-                # don't propagate to the root logger
                 "propagate": False,
             },
         },
-        # set the root logger
         "root": {"level": "INFO", "handlers": ["console"]},
     }
 )
@@ -52,106 +45,149 @@ AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 TWILIO_NUMBER = os.environ.get("TWILIO_NUMBER")
 RECIPIENTS = os.environ.get("RECIPIENTS")
 
-account_sid = ACCOUNT_SID
-auth_token = AUTH_TOKEN
+URL = "https://www.bbg.org/collections/cherries"
+REQUEST_TIMEOUT_SECONDS = 30
+PRUNUSES_PATTERN = re.compile(r"var prunuses = (\[.*?\]);", re.DOTALL)
+DESIRED_ORDER = ["Prebloom", "First Bloom", "Peak Bloom", "Post-Peak Bloom"]
 
-client = Client(account_sid, auth_token)
+
+def extract_prunuses_script(soup):
+    for script in soup.find_all("script"):
+        script_content = script.string or script.get_text()
+        if script_content and "var prunuses =" in script_content:
+            return script_content
+
+    raise ValueError("Could not find the BBG prunuses data script on the page.")
 
 
-class BloomStage(Enum):
-    prebloom = "Prebloom"
-    first_bloom = "First Bloom"
-    peak_bloom = "Peak Bloom"
-    post_peak_bloom = "Post-Peak Bloom"
-    
+def parse_prunuses(script_with_tree_data):
+    match = PRUNUSES_PATTERN.search(script_with_tree_data)
+    if not match:
+        raise ValueError("Could not parse the BBG prunuses array from the page.")
+
+    prunuses = match.group(1)
+    prunuses = re.sub(r",[ \t\r\n]+\]", "]", prunuses)
+    return json.loads(prunuses)
+
+
 def get_scraped_tree_data():
-    URL = "https://www.bbg.org/collections/cherries"
-    page = requests.get(URL)
+    response = requests.get(
+        URL,
+        timeout=REQUEST_TIMEOUT_SECONDS,
+        headers={"User-Agent": "cherrywatch/1.0"},
+    )
+    response.raise_for_status()
 
-    soup = BeautifulSoup(page.text, "html.parser")
-
-    script_with_tree_data = soup.find_all("script")[3].string.strip()
-
-    pattern = re.compile("var prunuses = ([\s\S]*);", re.MULTILINE)
-
-    prunuses = re.match(pattern, script_with_tree_data)
-    prunuses = prunuses.group(1)
-
-    # remove trailing comma
-    prunuses = re.sub(",[ \t\r\n]+\]", "]", prunuses)
-
-    prunuses = json.loads(prunuses)
-    
+    soup = BeautifulSoup(response.text, "html.parser")
+    script_with_tree_data = extract_prunuses_script(soup)
+    prunuses = parse_prunuses(script_with_tree_data)
+    logging.info("Scraped %s cherry tree rows from BBG.", len(prunuses))
     return prunuses
 
 
-prunuses = get_scraped_tree_data()
+def build_update_message(prunuses):
+    kanzan_bloom_counts = defaultdict(int)
+    combined_other_bloom_counts = defaultdict(int)
+    total_kanzan = 0
+    total_others = 0
+    tree_types = set()
 
-update_message = "Welcome to Jen's Cherry Blossom Watch! \n\n"
-update_message += "Today, at the Brooklyn Botanic Garden, "
+    for tree in prunuses:
+        tree_type = tree[3]
+        tree_types.add(tree_type)
+        bloom_stage = tree[7]
+        if tree_type == "kanzan":
+            kanzan_bloom_counts[bloom_stage] += 1
+            total_kanzan += 1
+        else:
+            combined_other_bloom_counts[bloom_stage] += 1
+            total_others += 1
 
-kanzan_bloom_counts = defaultdict(int)
-combined_other_bloom_counts = defaultdict(int)
-total_kanzan = 0
-total_others = 0
+    tree_types.discard("kanzan")
+    non_kanzan_species_count = len(tree_types)
 
-tree_types = set()
+    kanzan_percentages = {
+        stage: round((count / total_kanzan) * 100, 2)
+        for stage, count in kanzan_bloom_counts.items()
+    }
+    other_percentages = {
+        stage: round((count / total_others) * 100, 2)
+        for stage, count in combined_other_bloom_counts.items()
+    }
 
-# Process the tree data
-for tree in prunuses:
-    tree_type = tree[3]
-    tree_types.add(tree_type)
-    bloom_stage = tree[7]
-    if tree_type == "kanzan":
-        kanzan_bloom_counts[bloom_stage] += 1
-        total_kanzan += 1
-    else:
-        combined_other_bloom_counts[bloom_stage] += 1
-        total_others += 1
-        
-# Remove 'kanzan' from the set and count the remaining types
-tree_types.discard("kanzan")
-non_kanzan_species_count = len(tree_types)
+    update_message = "Welcome to Jen's Cherry Blossom Watch! \n\n"
+    update_message += "Today, at the Brooklyn Botanic Garden, "
+    update_message += "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk are at peak bloom! 🚨\n"
 
-# Calculating percentages
-kanzan_percentages = {
-    stage: round((count / total_kanzan) * 100, 2)
-    for stage, count in kanzan_bloom_counts.items()
-}
-other_percentages = {
-    stage: round((count / total_others) * 100, 2)
-    for stage, count in combined_other_bloom_counts.items()
-}
+    for stage in DESIRED_ORDER:
+        if stage in kanzan_percentages:
+            update_message += f"'{stage}': {kanzan_percentages[stage]}%\n"
 
-update_message += "the double-blossom Kanzan trees on Cherry Esplanade and Cherry Walk are at peak bloom! 🚨\n"
+    update_message += (
+        f"\nThe remaining {non_kanzan_species_count} species are at the following bloom stages:\n"
+    )
 
-desired_order = ['Prebloom', 'First Bloom', 'Peak Bloom', 'Post-Peak Bloom']
+    for stage in DESIRED_ORDER:
+        if stage in other_percentages:
+            update_message += f"'{stage}': {other_percentages[stage]}%\n"
 
-for stage in desired_order:
-    if stage in kanzan_percentages:
-        update_message += f"'{stage}': {kanzan_percentages[stage]}%\n"
+    return update_message
 
-update_message += f"\nThe remaining {non_kanzan_species_count} species are at the following bloom stages:\n"
 
-for stage in desired_order:
-    if stage in other_percentages:
-        update_message += f"'{stage}': {other_percentages[stage]}%\n"
+def get_recipients():
+    if not RECIPIENTS:
+        raise ValueError("RECIPIENTS is not set.")
 
-today = date.today()
-today = today.strftime("%-m-%-d-%Y")
+    recipients = [recipient.strip() for recipient in RECIPIENTS.split(",") if recipient.strip()]
+    if not recipients:
+        raise ValueError("RECIPIENTS does not contain any valid phone numbers.")
 
-recipients = RECIPIENTS.split(",")
+    return recipients
 
-print(f"Message: {update_message}")
 
-try:
+def get_twilio_client():
+    missing_vars = [
+        env_name
+        for env_name, value in {
+            "ACCOUNT_SID": ACCOUNT_SID,
+            "AUTH_TOKEN": AUTH_TOKEN,
+            "TWILIO_NUMBER": TWILIO_NUMBER,
+        }.items()
+        if not value
+    ]
+
+    if missing_vars:
+        raise ValueError(f"Missing required Twilio env vars: {', '.join(missing_vars)}")
+
+    return Client(ACCOUNT_SID, AUTH_TOKEN)
+
+
+def send_notifications(update_message):
+    today = date.today().strftime("%-m-%-d-%Y")
+    client = get_twilio_client()
+    recipients = get_recipients()
+
+    logging.info("Sending update to %s recipient(s).", len(recipients))
+    logging.info("Message: %s", update_message)
+
     for recipient in recipients:
-        message = client.messages.create(
+        client.messages.create(
             to=recipient,
             from_=TWILIO_NUMBER,
             body=update_message,
             media_url=f"https://raw.githubusercontent.com/jennyckaplan/cherrywatch/main/images/{today}.png",
         )
-except Exception as error:
-    logging.info(f"ERROR: {error}")
-    sys.exit(1)
+
+
+def main():
+    prunuses = get_scraped_tree_data()
+    update_message = build_update_message(prunuses)
+    send_notifications(update_message)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        logging.exception("ERROR: %s", error)
+        sys.exit(1)
