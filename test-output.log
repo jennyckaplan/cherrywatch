@@ -3,11 +3,11 @@ warning package.json: No license field
 $ jest --runInBand
 FAIL ./cherrywatch.test.js
   visual snapshots
-    ✕ get visual snapshot of cherry watch map (3261 ms)
+    ✕ get visual snapshot of cherry watch map (2900 ms)
 
   ● visual snapshots › get visual snapshot of cherry watch map
 
-    Expected image to match or be a close match to snapshot but was 0.18888644849549746% different from snapshot (387 differing pixels).
+    Expected image to match or be a close match to snapshot but was 0.08492569002123143% different from snapshot (174 differing pixels).
     See diff for details: /home/runner/work/cherrywatch/cherrywatch/__image_snapshots__/__diff_output__/cherrywatch-test-js-visual-snapshots-get-visual-snapshot-of-cherry-watch-map-1-diff.png
 
       41 |     });
@@ -27,7 +27,7 @@ Snapshot Summary
 Test Suites: 1 failed, 1 total
 Tests:       1 failed, 1 total
 Snapshots:   1 failed, 1 total
-Time:        3.808 s
+Time:        4.481 s
 Ran all test suites.
 error Command failed with exit code 1.
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
